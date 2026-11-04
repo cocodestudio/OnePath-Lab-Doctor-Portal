@@ -1,0 +1,123 @@
+@import "tailwindcss";
+
+/*
+  ════════════════════════════════════════════════════════════
+  OnePath Lab — Doctor Referral Portal Theme (Matching LIS)
+  Clean warm bone paper / crisp white · Forest emerald branding
+  ════════════════════════════════════════════════════════════
+*/
+
+:root {
+  --background: #fbfbfa;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --border: #e2e8f0;
+  --primary: #185e48;
+  --primary-hover: #134e3b;
+}
+
+/* ── Smooth Scrolling ── */
+html {
+  scroll-behavior: smooth !important;
+}
+
+/* ── Mobile Font Size Lock & Global Text-Selection Protection ── */
+html, body {
+  -webkit-text-size-adjust: 100% !important;
+  text-size-adjust: 100% !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: inherit;
+}
+
+/* ── Disable Text Copy Globally Across Entire Portal ── */
+*, *::before, *::after {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+
+/* Permit inputs and textareas to be editable & selectable for typing */
+input, textarea {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+}
+
+/* LIS Brand Emerald Gradient Utility */
+.gradient-primary {
+  background: linear-gradient(135deg, #185e48 0%, #0e3b2e 100%);
+}
+
+.gradient-primary-soft {
+  background: linear-gradient(135deg, #e6f4ea 0%, #e0f2f1 100%);
+}
+
+/* ── Custom Clean Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ── High-Performance Shimmer Effect Keyframes & Utilities ── */
+@keyframes shimmerWave {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.shimmer-box {
+  position: relative;
+  overflow: hidden;
+  background-color: #f1f5f9;
+}
+
+.shimmer-box::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.7) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: shimmerWave 1.6s infinite ease-in-out;
+}
+
+/* ── Print Styles for Clean A4 Medical Report ── */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  header, nav, aside, footer, .no-print, [aria-live="polite"] {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .printable-report-area {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+}

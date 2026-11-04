@@ -1,0 +1,928 @@
+export const ALL_DESIGNATIONS = [
+  "Mr.",
+  "Mrs.",
+  "Ms.",
+  "Dr.",
+  "Master.",
+  "Miss.",
+  "Shri.",
+  "Smt.",
+  "Baby",
+  "Baby of",
+  "Baby (B/o)",
+  "W/o",
+  "S/o",
+  "D/o",
+  "C/o",
+  "M/o",
+  "Mohd.",
+  "Kumar.",
+  "Kumari.",
+  "Md.",
+  "Baba",
+  "Junior",
+  "Pet of",
+  "Sk.",
+  "Blank",
+  "Null",
+] as const;
+
+/**
+ * Normalizes any patient designation / title to Title Case (e.g. 'MR.' -> 'Mr.', 'dr.' -> 'Dr.').
+ * Safely preserves backward-compatibility for legacy database records and settings.
+ */
+export function normalizeDesignation(val?: string | null): string {
+  if (!val) return "Blank";
+  const trimmed = val.trim();
+  if (!trimmed || trimmed.toLowerCase() === "null" || trimmed.toLowerCase() === "blank" || trimmed.toLowerCase() === "none") return "Blank";
+
+  // Direct case-insensitive match against ALL_DESIGNATIONS
+  const found = ALL_DESIGNATIONS.find(
+    (d) =>
+      d.toLowerCase() === trimmed.toLowerCase() ||
+      d.replace(/\./g, "").toLowerCase() === trimmed.replace(/\./g, "").toLowerCase()
+  );
+  if (found) return found;
+
+  // Title case the string (first letter capital, rest lowercase)
+  return trimmed
+    .split(/\s+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
+export const ALL_ORDERING_FIELDS = [
+  "Name",
+  "Age/Gender",
+  "Referred By",
+  "Email ID",
+  "Insurance No.",
+  "Report ID",
+  "Report Date",
+  "Registration Date",
+  "Phone No.",
+  "Aadhaar No.",
+  "Patient ID",
+  "Address",
+  "Collected At",
+  "UHID",
+  "Passport Number",
+  "Owner Name",
+  "Breed",
+  "Species",
+  "Referring Lab",
+  "Received Date",
+  "Company",
+  "Report Status",
+  "Barcode",
+  "Referring Hospital",
+  "Second Referral",
+  "Government Panel",
+  "Collection Date",
+  "B2B Address",
+  "Custom ID",
+  "B2B Phone Number",
+  "B2B Email",
+  "TPA",
+  "Corporate Client",
+  "Corporate Plan",
+  "Processed At",
+  "Pincode",
+  "District",
+  "Town",
+  "Collection Center",
+  "HFR ID",
+  "Investigation",
+  "Height",
+  "Weight",
+] as const;
+
+export interface IntakeFieldConfig {
+  key: string;
+  label: string;
+  orderingName: string;
+  category: "Demographics" | "Clinical & Referral" | "Identification & Documents" | "Logistics & Physical" | "Veterinary";
+  enabled: boolean;
+  required: boolean;
+  showOnReport: boolean;
+}
+
+export const DEFAULT_INTAKE_FIELDS: IntakeFieldConfig[] = [
+  { key: "name", label: "Patient Full Name", orderingName: "Name", category: "Demographics", enabled: true, required: true, showOnReport: true },
+  { key: "ageGender", label: "Age & Gender", orderingName: "Age/Gender", category: "Demographics", enabled: true, required: true, showOnReport: true },
+  { key: "phone", label: "Phone Number", orderingName: "Phone No.", category: "Demographics", enabled: true, required: true, showOnReport: true },
+  { key: "email", label: "Email ID", orderingName: "Email ID", category: "Demographics", enabled: false, required: false, showOnReport: true },
+  { key: "address", label: "Street / Residential Address", orderingName: "Address", category: "Demographics", enabled: true, required: false, showOnReport: true },
+  { key: "pincode", label: "Pincode", orderingName: "Pincode", category: "Demographics", enabled: false, required: false, showOnReport: false },
+  { key: "city", label: "City / Town", orderingName: "Town", category: "Demographics", enabled: false, required: false, showOnReport: false },
+  { key: "district", label: "District", orderingName: "District", category: "Demographics", enabled: false, required: false, showOnReport: false },
+
+  { key: "refDoctor", label: "Referred By (Doctor)", orderingName: "Referred By", category: "Clinical & Referral", enabled: true, required: false, showOnReport: true },
+  { key: "secondReferral", label: "Second Referral", orderingName: "Second Referral", category: "Clinical & Referral", enabled: false, required: false, showOnReport: false },
+  { key: "collectedAt", label: "Collection Center / Branch", orderingName: "Collection Center", category: "Clinical & Referral", enabled: true, required: false, showOnReport: true },
+  { key: "collectedBy", label: "Sample Collected By", orderingName: "Sample Collected By", category: "Clinical & Referral", enabled: true, required: false, showOnReport: false },
+
+  { key: "aadhaarNo", label: "Aadhaar / National ID", orderingName: "Aadhaar No.", category: "Identification & Documents", enabled: false, required: false, showOnReport: false },
+  { key: "insuranceNo", label: "Insurance Policy No.", orderingName: "Insurance No.", category: "Identification & Documents", enabled: false, required: false, showOnReport: false },
+  { key: "tpa", label: "TPA / Insurance Desk", orderingName: "TPA", category: "Identification & Documents", enabled: false, required: false, showOnReport: false },
+  { key: "hfrId", label: "HFR / ABHA Health ID", orderingName: "HFR ID", category: "Identification & Documents", enabled: false, required: false, showOnReport: false },
+  { key: "uhid", label: "UHID (Hospital ID)", orderingName: "UHID", category: "Identification & Documents", enabled: false, required: false, showOnReport: false },
+  { key: "passportNumber", label: "Passport Number", orderingName: "Passport Number", category: "Identification & Documents", enabled: false, required: false, showOnReport: false },
+  { key: "corporateName", label: "Corporate Client", orderingName: "Corporate Client", category: "Identification & Documents", enabled: false, required: false, showOnReport: false },
+  { key: "corporatePlan", label: "Corporate Plan", orderingName: "Corporate Plan", category: "Identification & Documents", enabled: false, required: false, showOnReport: false },
+  { key: "govPanel", label: "Government Panel", orderingName: "Government Panel", category: "Identification & Documents", enabled: false, required: false, showOnReport: false },
+
+  { key: "vialBarcode", label: "Vial Barcode / Sample ID", orderingName: "Barcode", category: "Logistics & Physical", enabled: true, required: false, showOnReport: true },
+  { key: "height", label: "Patient Height", orderingName: "Height", category: "Logistics & Physical", enabled: false, required: false, showOnReport: false },
+  { key: "weight", label: "Patient Weight", orderingName: "Weight", category: "Logistics & Physical", enabled: false, required: false, showOnReport: false },
+
+  { key: "ownerName", label: "Owner Name (Vet)", orderingName: "Owner Name", category: "Veterinary", enabled: false, required: false, showOnReport: false },
+  { key: "breed", label: "Breed (Vet)", orderingName: "Breed", category: "Veterinary", enabled: false, required: false, showOnReport: false },
+  { key: "species", label: "Species (Vet)", orderingName: "Species", category: "Veterinary", enabled: false, required: false, showOnReport: false },
+];
+
+export interface DoctorSignatureConfig {
+  id?: string;
+  enabled: boolean;
+  imageUrl: string | null;
+  name: string;
+  designation: string;
+  registrationNo?: string;
+  alignment?: "left" | "center" | "right";
+  position?: "left" | "right";
+  width: number;
+  marginTop: number;
+  marginBottom: number;
+  marginLeft: number;
+  marginRight: number;
+  showSignatureOnly?: boolean;
+}
+
+export function resolveSignatureUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (url.startsWith("data:") || url.startsWith("blob:") || url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+  const apiOrigin = process.env.NEXT_PUBLIC_API_URL 
+    ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/lis\/?$/, "").replace(/\/api\/?$/, "")
+    : (typeof window !== "undefined" && window.location.hostname === "localhost" ? "http://localhost:8000" : "https://api.onepathlab.com");
+  const cleanPath = url.startsWith("/") ? url : `/${url}`;
+  return `${apiOrigin}${cleanPath}`;
+}
+
+export interface SmartReportSettings {
+  /** Cover page design template ID */
+  coverDesign:
+    | "template-1" | "template-2" | "template-3" | "template-4" // legacy
+    | "cover-classic" | "cover-modern" | "cover-tech" | "cover-wellness" | "cover-gradient" | "cover-minimal"; // new
+  /** Interior (pages 2–4) layout template ID */
+  interiorDesign?: "interior-clean" | "interior-premium" | "interior-accent" | "interior-card";
+  /** Back cover / exterior page template ID */
+  exteriorDesign?: "exterior-none" | "exterior-gradient" | "exterior-qr" | "exterior-minimal";
+  themeColor: string;
+  labName: string;
+  labAddress: string;
+  email: string;
+  emailAddress?: string;
+  logoUrl?: string | null;
+  showLogo?: boolean;
+  footerText: string;
+  aiGeneratedTag: boolean;
+  showAiTag?: boolean;
+  showHistoryGraph: boolean;
+  showExecutiveSummary: boolean;
+  showOrganHealth: boolean;
+  showOrganHealthGauges?: boolean;
+  showDietTips: boolean;
+  showDietLifestyleTips?: boolean;
+  disclaimer: string;
+  disclaimerText?: string;
+}
+
+export const defaultSmartReportSettings: SmartReportSettings = {
+  coverDesign: "cover-classic",
+  interiorDesign: "interior-clean",
+  exteriorDesign: "exterior-none",
+  themeColor: "#0284c7",
+  labName: "OnePath Diagnostics",
+  labAddress: "Main Healthcare Boulevard, Diagnostic Wing",
+  email: "care@onepathlab.com",
+  emailAddress: "care@onepathlab.com",
+  logoUrl: null,
+  showLogo: true,
+  footerText: "Certified Diagnostic Report • Powered by OnePath AI Clinical Insights",
+  aiGeneratedTag: true,
+  showAiTag: true,
+  showHistoryGraph: true,
+  showExecutiveSummary: true,
+  showOrganHealth: true,
+  showOrganHealthGauges: true,
+  showDietTips: true,
+  showDietLifestyleTips: true,
+  disclaimer: `1. Clinical Use Only
+• This report is intended for informational and analytical purposes only.
+• It should be used by qualified healthcare professionals for clinical correlation.
+• It is not a substitute for formal medical consultation, diagnosis, or treatment.
+
+2. No Diagnostic Claim
+• Information in this report, including AI-based insights and trend analyses, is suggestive in nature.
+• It must not be solely relied upon for diagnosis or treatment decisions.
+• Always consult a registered medical practitioner.`,
+  disclaimerText: `1. Clinical Use Only
+• This report is intended for informational and analytical purposes only.
+• It should be used by qualified healthcare professionals for clinical correlation.
+• It is not a substitute for formal medical consultation, diagnosis, or treatment.
+
+2. No Diagnostic Claim
+• Information in this report, including AI-based insights and trend analyses, is suggestive in nature.
+• It must not be solely relied upon for diagnosis or treatment decisions.
+• Always consult a registered medical practitioner.`,
+};
+
+export interface ReportFontOption {
+  id: string;
+  name: string;
+  category: "Standard" | "Modern" | "Corporate" | "Classic" | "Soft";
+  fontFamily: string;
+  description: string;
+  sampleText?: string;
+}
+
+export const REPORT_FONTS: ReportFontOption[] = [
+  {
+    id: "Arial",
+    name: "Arial / Helvetica",
+    category: "Standard",
+    fontFamily: 'Arial, "Helvetica Neue", Helvetica, sans-serif',
+    description: "Universal laboratory standard. Clean, crisp medical numbers with perfect high-speed print reliability.",
+  },
+  {
+    id: "Inter",
+    name: "Inter",
+    category: "Modern",
+    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    description: "Modern clinical tech. Outstanding legibility for small parameter ranges and microscopic findings.",
+  },
+  {
+    id: "Roboto",
+    name: "Roboto",
+    category: "Modern",
+    fontFamily: '"Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif',
+    description: "Clean hospital diagnostic standard. Balanced geometric numbers used by premier diagnostic chains.",
+  },
+  {
+    id: "Calibri",
+    name: "Calibri / Carlito",
+    category: "Corporate",
+    fontFamily: 'Calibri, Carlito, "Segoe UI", Arial, sans-serif',
+    description: "Compact corporate typography. Space-saving proportions allow fitting more clinical parameters on a single page.",
+  },
+  {
+    id: "Segoe UI",
+    name: "Segoe UI",
+    category: "Corporate",
+    fontFamily: '"Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif',
+    description: "Crisp and professional. Sharp letterforms with prominent diagnostic test headers.",
+  },
+  {
+    id: "Poppins",
+    name: "Poppins",
+    category: "Soft",
+    fontFamily: '"Poppins", "Segoe UI", Roboto, -apple-system, sans-serif',
+    description: "Premium boutique laboratory look. Friendly rounded geometry ideal for private wellness clinics.",
+  },
+  {
+    id: "Georgia",
+    name: "Georgia / Times",
+    category: "Classic",
+    fontFamily: 'Georgia, "Times New Roman", Times, serif',
+    description: "Traditional formal medical serif. Preferred by senior consulting pathologists and government hospital panels.",
+  },
+];
+
+export function getReportFontStack(fontId?: string | null): string {
+  if (!fontId) return 'Arial, "Helvetica Neue", Helvetica, sans-serif';
+  const match = REPORT_FONTS.find(
+    (f) => f.id.toLowerCase() === fontId.trim().toLowerCase() || f.name.toLowerCase() === fontId.trim().toLowerCase()
+  );
+  return match ? match.fontFamily : (fontId.includes(",") ? fontId : `${fontId}, Arial, sans-serif`);
+}
+
+export interface ReportLayoutSettings {
+  defaultDesignation: string;
+  flags: {
+    enabled: boolean;
+    lowColor: string;
+    highColor: string;
+    boldOnlyResultAndFlag: boolean;
+    showArrows: boolean;
+  };
+  fieldsToShow: {
+    testMethod: boolean;
+    interpretation: boolean;
+    phoneNumber: boolean;
+    departmentName: boolean;
+  };
+  patientDetailsOrder: string[];
+  intakeFields?: IntakeFieldConfig[];
+  typography: {
+    fontFamily?: string;
+    departmentFontSize: number;
+    columnHeadingFontSize: number;
+    testNameFontSize: number;
+    parameterCommentFontSize: number;
+    testParameterFontSize: number;
+    testMethodFontSize: number;
+    testMethodColor: string;
+    sampleTypeFontSize: number;
+    showSampleType: boolean;
+    spacingBetweenTests: number;
+    showBarcode: boolean;
+    removeLineAtEndOfTest: boolean;
+    lineBelowEachParameterRow: boolean;
+    leftAlignSubParameters: boolean;
+    boldMultiTypeParameter: boolean;
+    properCaseTestNames: boolean;
+    departmentNameAlignment: "Left" | "Middle" | "Center" | "Right";
+    testNameAlignment: "Left" | "Middle" | "Center";
+    testBodyImageAlignment: "Left" | "Center" | "Right";
+    rowAlignment: "Top" | "Center" | "Middle";
+  };
+  spacing: {
+    department: number;
+    testName: number;
+    columnHeader: number;
+    testParameters: number;
+    parameterComment: number;
+    testMethod: number;
+    interchangeColumns: boolean;
+  };
+  interpretation: {
+    headingFontSize: number;
+    contentFontSize: number;
+    boldHeading: boolean;
+  };
+  noteComment: {
+    headingFontSize: number;
+    contentFontSize: number;
+  };
+  columnWidth: {
+    testDescription: number;
+    result: number;
+    flag: number;
+    refRange: number;
+    unit: number;
+  };
+  columnLabels: {
+    testDescription: string;
+    result: string;
+    flag: string;
+    refRange: string;
+    unit: string;
+  };
+  endingLine: {
+    text: string;
+    fontSize: number;
+  };
+  doctorSignature: DoctorSignatureConfig;
+  doctorSignatures: DoctorSignatureConfig[];
+  signatureSettings: {
+    printOnEveryPage: boolean;
+    showSignatureOnly: boolean;
+    positionMode?: "flow" | "fixed";
+    bottomOffset?: number;
+    horizontalAlign?: "left" | "center" | "right";
+    horizontalOffset?: number;
+  };
+  signaturePrintOnEveryPage?: boolean;
+  showSignatureOnly?: boolean;
+  groupByDepartment?: boolean;
+  departmentOrder?: string[];
+  separatePagePerTest?: boolean;
+  smartReport?: SmartReportSettings;
+  /** Custom starting series for specimen/vacutainer barcodes (e.g. "0000001", "100001", "OPL-0001") */
+  barcodeSeries?: string;
+  /** Counter tracking the sequential progression for this series */
+  barcodeCounter?: number;
+}
+
+export const DEFAULT_DEPARTMENT_ORDER = [
+  "Haematology",
+  "Biochemistry",
+  "Serology & Immunology",
+  "Clinical Pathology",
+  "Microbiology",
+  "Endocrinology & Hormones",
+  "Molecular Biology",
+  "Histopathology & Cytology",
+  "Other / General",
+] as const;
+
+export const defaultReportLayoutSettings: ReportLayoutSettings = {
+  defaultDesignation: "Blank",
+  flags: {
+    enabled: true,
+    lowColor: "#000000",
+    highColor: "#000000",
+    boldOnlyResultAndFlag: false,
+    showArrows: true,
+  },
+  fieldsToShow: {
+    testMethod: true,
+    interpretation: true,
+    phoneNumber: true,
+    departmentName: true,
+  },
+  patientDetailsOrder: [
+    "Name",
+    "Age/Gender",
+    "Referred By",
+    "Report Date",
+    "Phone No.",
+    "Report Status",
+  ],
+  groupByDepartment: true,
+  departmentOrder: [...DEFAULT_DEPARTMENT_ORDER],
+  intakeFields: DEFAULT_INTAKE_FIELDS,
+  smartReport: { ...defaultSmartReportSettings },
+  barcodeSeries: "",
+  barcodeCounter: 0,
+  typography: {
+    fontFamily: "Arial",
+    departmentFontSize: 13,
+    columnHeadingFontSize: 10,
+    testNameFontSize: 12,
+    parameterCommentFontSize: 10,
+    testParameterFontSize: 13,
+    testMethodFontSize: 8,
+    testMethodColor: "#71717a",
+    sampleTypeFontSize: 8,
+    showSampleType: false,
+    spacingBetweenTests: 6,
+    showBarcode: true,
+    removeLineAtEndOfTest: false,
+    lineBelowEachParameterRow: true,
+    leftAlignSubParameters: false,
+    boldMultiTypeParameter: false,
+    properCaseTestNames: false,
+    departmentNameAlignment: "Middle",
+    testNameAlignment: "Left",
+    testBodyImageAlignment: "Center",
+    rowAlignment: "Center",
+  },
+  spacing: {
+    department: 2,
+    testName: 7,
+    columnHeader: 4,
+    testParameters: 2,
+    parameterComment: 0,
+    testMethod: -2,
+    interchangeColumns: false,
+  },
+  interpretation: {
+    headingFontSize: 10,
+    contentFontSize: 10,
+    boldHeading: true,
+  },
+  noteComment: {
+    headingFontSize: 10,
+    contentFontSize: 10,
+  },
+  columnWidth: {
+    testDescription: 38,
+    result: 14,
+    flag: 7,
+    refRange: 27,
+    unit: 14,
+  },
+  columnLabels: {
+    testDescription: "TEST",
+    result: "VALUE",
+    flag: "FLAG",
+    refRange: "REFERENCE",
+    unit: "UNIT",
+  },
+  endingLine: {
+    text: "*** END OF REPORT ***",
+    fontSize: 9,
+  },
+  doctorSignature: {
+    id: "sig-1",
+    enabled: false,
+    imageUrl: null,
+    name: "Dr. S. K. Mukherjee",
+    designation: "Consultant Pathologist, MD (Pathology)",
+    registrationNo: "MCI-48291",
+    alignment: "left",
+    width: 130,
+    marginTop: 0,
+    marginBottom: 0,
+    marginLeft: 0,
+    marginRight: 0,
+  },
+  doctorSignatures: [
+    {
+      id: "sig-1",
+      enabled: false,
+      imageUrl: null,
+      name: "Dr. S. K. Mukherjee",
+      designation: "Consultant Pathologist, MD (Pathology)",
+      registrationNo: "MCI-48291",
+      alignment: "left",
+      width: 130,
+      marginTop: 0,
+      marginBottom: 0,
+      marginLeft: 0,
+      marginRight: 0,
+      showSignatureOnly: false,
+    }
+  ],
+  signatureSettings: {
+    printOnEveryPage: false,
+    showSignatureOnly: false,
+    positionMode: "fixed",
+    bottomOffset: 45,
+    horizontalAlign: "right",
+    horizontalOffset: 35,
+  },
+  signaturePrintOnEveryPage: false,
+  showSignatureOnly: false,
+  separatePagePerTest: false,
+};
+
+export function normalizeReportSettings(raw: any): ReportLayoutSettings {
+  if (typeof raw === "string") {
+    try {
+      raw = JSON.parse(raw);
+    } catch {
+      raw = {};
+    }
+  }
+  if (!raw || typeof raw !== "object") {
+    raw = {};
+  }
+
+  // Fallback to cached settings in localStorage if raw has no doctor signatures configured
+  if (!raw.doctorSignatures && !raw.doctor_signatures && !raw.doctorSignature && !raw.doctor_signature) {
+    try {
+      if (typeof window !== "undefined") {
+        const cached = localStorage.getItem("lis_cached_report_settings");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && typeof parsed === "object") {
+            raw = {
+              ...parsed,
+              ...raw,
+              doctorSignatures: parsed.doctorSignatures || parsed.doctor_signatures || raw.doctorSignatures,
+              doctorSignature: parsed.doctorSignature || parsed.doctor_signature || raw.doctorSignature,
+              signatureSettings: parsed.signatureSettings || parsed.signature_settings || raw.signatureSettings,
+            };
+          }
+        }
+      }
+    } catch {}
+  }
+
+  const res = {
+    ...defaultReportLayoutSettings,
+    flags: { ...defaultReportLayoutSettings.flags },
+    fieldsToShow: { ...defaultReportLayoutSettings.fieldsToShow },
+    typography: { ...defaultReportLayoutSettings.typography },
+    spacing: { ...defaultReportLayoutSettings.spacing },
+    interpretation: { ...defaultReportLayoutSettings.interpretation },
+    noteComment: { ...defaultReportLayoutSettings.noteComment },
+    columnWidth: { ...defaultReportLayoutSettings.columnWidth },
+    columnLabels: { ...defaultReportLayoutSettings.columnLabels },
+    endingLine: { ...defaultReportLayoutSettings.endingLine },
+    doctorSignature: { ...defaultReportLayoutSettings.doctorSignature },
+    doctorSignatures: defaultReportLayoutSettings.doctorSignatures.map(s => ({ ...s })),
+    signatureSettings: { ...defaultReportLayoutSettings.signatureSettings },
+  };
+
+  if (raw.defaultDesignation || raw.default_designation) {
+    res.defaultDesignation = normalizeDesignation(raw.defaultDesignation || raw.default_designation);
+  }
+
+  if (raw.flags) {
+    res.flags = {
+      ...res.flags,
+      ...raw.flags,
+    };
+  }
+
+  if (raw.fieldsToShow || raw.fields_to_show) {
+    res.fieldsToShow = {
+      ...res.fieldsToShow,
+      ...(raw.fieldsToShow || raw.fields_to_show),
+    };
+  }
+
+  if (Array.isArray(raw.patientDetailsOrder || raw.patient_details_order)) {
+    const list = raw.patientDetailsOrder || raw.patient_details_order;
+    if (list.length > 0) {
+      res.patientDetailsOrder = list;
+    }
+  }
+
+  if (Array.isArray(raw.intakeFields || raw.intake_fields)) {
+    const list = raw.intakeFields || raw.intake_fields;
+    res.intakeFields = DEFAULT_INTAKE_FIELDS.map(def => {
+      const match = list.find((item: any) => item.key === def.key || item.orderingName === def.orderingName);
+      if (!match) return { ...def };
+      // Core demographic and referral fields must never be automatically disabled
+      const isCoreDemographic = def.key === "phone" || def.key === "address" || def.key === "name" || def.key === "ageGender" || def.key === "refDoctor";
+      return {
+        ...def,
+        enabled: isCoreDemographic ? true : (match.enabled !== undefined ? !!match.enabled : def.enabled),
+        required: match.required !== undefined ? !!match.required : def.required,
+        showOnReport: match.showOnReport !== undefined ? !!match.showOnReport : def.showOnReport,
+      };
+    });
+  }
+
+  if (raw.typography) {
+    res.typography = {
+      ...res.typography,
+      ...raw.typography,
+    };
+  }
+
+  if (raw.spacing) {
+    res.spacing = {
+      ...res.spacing,
+      ...raw.spacing,
+    };
+  }
+
+  if (raw.interpretation) {
+    res.interpretation = {
+      ...res.interpretation,
+      ...raw.interpretation,
+    };
+  }
+
+  if (raw.noteComment || raw.note_comment) {
+    res.noteComment = {
+      ...res.noteComment,
+      ...(raw.noteComment || raw.note_comment),
+    };
+  }
+
+  if (raw.columnWidth || raw.column_width) {
+    res.columnWidth = {
+      ...res.columnWidth,
+      ...(raw.columnWidth || raw.column_width),
+    };
+  }
+
+  if (raw.columnLabels || raw.column_labels) {
+    res.columnLabels = {
+      ...res.columnLabels,
+      ...(raw.columnLabels || raw.column_labels),
+    };
+  }
+
+  if (raw.endingLine || raw.ending_line) {
+    res.endingLine = {
+      ...res.endingLine,
+      ...(raw.endingLine || raw.ending_line),
+    };
+  }
+
+  const normalizeSingleSig = (rawSig: any, index = 0): DoctorSignatureConfig => {
+    const isExplicitlyDisabled = rawSig.enabled === false || rawSig.enabled === "false" || rawSig.enabled === 0 || rawSig.enabled === "0";
+    const isExplicitlyEnabled = rawSig.enabled === true || rawSig.enabled === "true" || rawSig.enabled === 1 || rawSig.enabled === "1";
+    const hasImage = Boolean(rawSig.imageUrl || rawSig.image_url);
+    const hasCustomName = Boolean(rawSig.name && !String(rawSig.name).includes("Mukherjee") && !String(rawSig.name).includes("Authorized Pathologist"));
+
+    // Automatically enabled if explicitly enabled OR if an image is uploaded OR if a custom doctor name was saved and not explicitly disabled
+    const isEnabled = isExplicitlyDisabled
+      ? false
+      : (isExplicitlyEnabled || hasImage || (hasCustomName && rawSig.enabled !== false));
+
+    return {
+      id: rawSig.id || `sig-${index + 1}`,
+      enabled: isEnabled,
+      imageUrl: rawSig.imageUrl || rawSig.image_url || null,
+      name: rawSig.name || `Dr. ${index === 0 ? "S. K. Mukherjee" : "Authorized Pathologist"}`,
+      designation: rawSig.designation || "Consultant Pathologist, MD",
+      registrationNo: rawSig.registrationNo || rawSig.registration_no || "",
+      alignment: rawSig.alignment || (index % 2 === 0 ? "left" : "right"),
+      position: rawSig.position || (index % 2 === 0 ? "left" : "right"),
+      width: typeof rawSig.width === 'number' && rawSig.width > 0 ? rawSig.width : 130,
+      marginTop: typeof rawSig.marginTop === 'number' ? rawSig.marginTop : (typeof rawSig.margin_top === 'number' ? rawSig.margin_top : 0),
+      marginBottom: typeof rawSig.marginBottom === 'number' ? rawSig.marginBottom : (typeof rawSig.margin_bottom === 'number' ? rawSig.margin_bottom : 0),
+      marginLeft: typeof rawSig.marginLeft === 'number' ? rawSig.marginLeft : (typeof rawSig.margin_left === 'number' ? rawSig.margin_left : 0),
+      marginRight: typeof rawSig.marginRight === 'number' ? rawSig.marginRight : (typeof rawSig.margin_right === 'number' ? rawSig.margin_right : 0),
+      showSignatureOnly: rawSig.showSignatureOnly !== undefined 
+        ? (rawSig.showSignatureOnly === true || rawSig.showSignatureOnly === "true" || rawSig.showSignatureOnly === 1 || rawSig.showSignatureOnly === "1")
+        : (rawSig.show_signature_only === true || rawSig.show_signature_only === "true" || rawSig.show_signature_only === 1 || rawSig.show_signature_only === "1"),
+    };
+  };
+
+  const rawSignaturesArray = raw.doctorSignatures || raw.doctor_signatures;
+  if (Array.isArray(rawSignaturesArray) && rawSignaturesArray.length > 0) {
+    res.doctorSignatures = rawSignaturesArray.map((sig, idx) => normalizeSingleSig(sig, idx));
+    res.doctorSignature = res.doctorSignatures[0];
+  } else if (raw.doctorSignature || raw.doctor_signature) {
+    const single = normalizeSingleSig(raw.doctorSignature || raw.doctor_signature, 0);
+    res.doctorSignature = single;
+    res.doctorSignatures = [single];
+  }
+
+  // Double check: If doctorSignature had an active image or was enabled, make sure res.doctorSignatures includes it
+  if (raw.doctorSignature || raw.doctor_signature) {
+    const single = normalizeSingleSig(raw.doctorSignature || raw.doctor_signature, 0);
+    if (single.enabled && (!res.doctorSignatures.some(s => s.enabled))) {
+      res.doctorSignatures[0] = { ...res.doctorSignatures[0], ...single, enabled: true };
+      res.doctorSignature = res.doctorSignatures[0];
+    }
+  }
+
+  const rawSigSettings = raw.signatureSettings || raw.signature_settings || {};
+  const printOnEveryPage = rawSigSettings.printOnEveryPage !== undefined
+    ? !!rawSigSettings.printOnEveryPage
+    : (raw.signaturePrintOnEveryPage !== undefined
+        ? !!raw.signaturePrintOnEveryPage
+        : (raw.signature_print_on_every_page !== undefined ? !!raw.signature_print_on_every_page : false));
+
+  const showSignatureOnly = rawSigSettings.showSignatureOnly !== undefined
+    ? !!rawSigSettings.showSignatureOnly
+    : (raw.showSignatureOnly !== undefined
+        ? !!raw.showSignatureOnly
+        : (raw.show_signature_only !== undefined ? !!raw.show_signature_only : false));
+
+  const positionMode: "flow" | "fixed" = rawSigSettings.positionMode || rawSigSettings.position_mode || raw.signaturePositionMode || "fixed";
+  const bottomOffset = typeof rawSigSettings.bottomOffset === "number"
+    ? rawSigSettings.bottomOffset
+    : (typeof rawSigSettings.bottom_offset === "number"
+        ? rawSigSettings.bottom_offset
+        : (typeof raw.signatureBottomOffset === "number" ? raw.signatureBottomOffset : 45));
+  const horizontalAlign: "left" | "center" | "right" = rawSigSettings.horizontalAlign || rawSigSettings.horizontal_align || raw.signatureHorizontalAlign || "right";
+  const horizontalOffset = typeof rawSigSettings.horizontalOffset === "number"
+    ? rawSigSettings.horizontalOffset
+    : (typeof rawSigSettings.horizontal_offset === "number"
+        ? rawSigSettings.horizontal_offset
+        : (typeof raw.signatureHorizontalOffset === "number" ? raw.signatureHorizontalOffset : 35));
+
+  res.signatureSettings = {
+    printOnEveryPage,
+    showSignatureOnly,
+    positionMode,
+    bottomOffset,
+    horizontalAlign,
+    horizontalOffset,
+  };
+  res.signaturePrintOnEveryPage = printOnEveryPage;
+  res.showSignatureOnly = showSignatureOnly;
+
+  res.groupByDepartment = raw.groupByDepartment !== undefined 
+    ? !!raw.groupByDepartment 
+    : (raw.group_by_department !== undefined ? !!raw.group_by_department : true);
+
+  const rawDeptOrder = raw.departmentOrder || raw.department_order;
+  if (Array.isArray(rawDeptOrder) && rawDeptOrder.length > 0) {
+    res.departmentOrder = rawDeptOrder;
+  } else {
+    res.departmentOrder = [...DEFAULT_DEPARTMENT_ORDER];
+  }
+
+  res.separatePagePerTest = raw.separatePagePerTest !== undefined
+    ? !!raw.separatePagePerTest
+    : (raw.separate_page_per_test !== undefined ? !!raw.separate_page_per_test : false);
+
+  if (raw.smartReport || raw.smart_report) {
+    const sr = raw.smartReport || raw.smart_report;
+    const finalDisclaimer = sr.disclaimer || sr.disclaimerText || defaultSmartReportSettings.disclaimer;
+    const finalEmail = sr.email || sr.emailAddress || defaultSmartReportSettings.email;
+    res.smartReport = {
+      ...defaultSmartReportSettings,
+      ...sr,
+      email: finalEmail,
+      emailAddress: finalEmail,
+      logoUrl: sr.logoUrl !== undefined ? sr.logoUrl : defaultSmartReportSettings.logoUrl,
+      showLogo: sr.showLogo !== undefined ? sr.showLogo : defaultSmartReportSettings.showLogo,
+      aiGeneratedTag: sr.aiGeneratedTag !== undefined ? sr.aiGeneratedTag : (sr.showAiTag !== undefined ? sr.showAiTag : defaultSmartReportSettings.aiGeneratedTag),
+      showAiTag: sr.showAiTag !== undefined ? sr.showAiTag : (sr.aiGeneratedTag !== undefined ? sr.aiGeneratedTag : defaultSmartReportSettings.showAiTag),
+      showOrganHealth: sr.showOrganHealth !== undefined ? sr.showOrganHealth : (sr.showOrganHealthGauges !== undefined ? sr.showOrganHealthGauges : defaultSmartReportSettings.showOrganHealth),
+      showOrganHealthGauges: sr.showOrganHealthGauges !== undefined ? sr.showOrganHealthGauges : (sr.showOrganHealth !== undefined ? sr.showOrganHealth : defaultSmartReportSettings.showOrganHealthGauges),
+      showDietTips: sr.showDietTips !== undefined ? sr.showDietTips : (sr.showDietLifestyleTips !== undefined ? sr.showDietLifestyleTips : defaultSmartReportSettings.showDietTips),
+      showDietLifestyleTips: sr.showDietLifestyleTips !== undefined ? sr.showDietLifestyleTips : (sr.showDietTips !== undefined ? sr.showDietTips : defaultSmartReportSettings.showDietLifestyleTips),
+      disclaimer: finalDisclaimer,
+      disclaimerText: finalDisclaimer,
+    };
+  } else {
+    res.smartReport = { ...defaultSmartReportSettings };
+  }
+
+  res.barcodeSeries = typeof raw.barcodeSeries === "string"
+    ? raw.barcodeSeries.trim()
+    : (typeof raw.barcode_series === "string" ? raw.barcode_series.trim() : "");
+
+  res.barcodeCounter = typeof raw.barcodeCounter === "number"
+    ? raw.barcodeCounter
+    : (typeof raw.barcode_counter === "number" ? raw.barcode_counter : 0);
+
+  return res;
+}
+
+/**
+ * Generates the next sequential specimen/vacutainer barcode.
+ * - If a custom barcode series is configured (e.g. "0000001", "100001", "OPL-0001"):
+ *   Parses the series prefix and numeric digits, keeping zero-padding length.
+ *   Starts from the series start number, increments +1 on each subsequent call.
+ *   Persists progression per lab in localStorage.
+ * - If no series is configured:
+ *   Generates a clean 7-digit random numeric string (e.g. "6839201").
+ */
+export function getNextSequentialBarcode(barcodeSeries?: string | null, labId?: string | number | null): string {
+  const trimmed = (barcodeSeries || "").trim();
+  if (!trimmed) {
+    // Default fallback: Pure 7-digit random numeric code (e.g. 5839201)
+    return Math.floor(1000000 + Math.random() * 9000000).toString();
+  }
+
+  const match = trimmed.match(/^(.*?)(\d+)$/);
+  if (!match) {
+    // If not ending in digits, append 6 random digits
+    return `${trimmed}${Math.floor(100000 + Math.random() * 900000)}`;
+  }
+
+  const prefix = match[1];
+  const digitsStr = match[2];
+  const padLength = digitsStr.length;
+  const initialNum = parseInt(digitsStr, 10);
+
+  const storageKey = `lis_barcode_seq_${labId || "default"}`;
+  let currentNum = initialNum;
+
+  try {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.series === trimmed && typeof parsed.lastNum === "number" && parsed.lastNum >= initialNum) {
+          currentNum = parsed.lastNum + 1;
+        } else {
+          currentNum = initialNum;
+        }
+      } else {
+        currentNum = initialNum;
+      }
+      localStorage.setItem(storageKey, JSON.stringify({ series: trimmed, lastNum: currentNum }));
+    }
+  } catch {
+    // If localStorage unavailable, return initial format
+  }
+
+  return `${prefix}${String(currentNum).padStart(padLength, "0")}`;
+}
+
+/**
+ * Peeks at the next barcode that will be generated for a series without incrementing its counter.
+ */
+export function peekNextBarcode(barcodeSeries?: string | null, labId?: string | number | null): string {
+  const trimmed = (barcodeSeries || "").trim();
+  if (!trimmed) {
+    return "Random 7-digit numeric (e.g. 6849201)";
+  }
+
+  const match = trimmed.match(/^(.*?)(\d+)$/);
+  if (!match) {
+    return `${trimmed}######`;
+  }
+
+  const prefix = match[1];
+  const digitsStr = match[2];
+  const padLength = digitsStr.length;
+  const initialNum = parseInt(digitsStr, 10);
+
+  const storageKey = `lis_barcode_seq_${labId || "default"}`;
+  let currentNum = initialNum;
+
+  try {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.series === trimmed && typeof parsed.lastNum === "number" && parsed.lastNum >= initialNum) {
+          currentNum = parsed.lastNum + 1;
+        }
+      }
+    }
+  } catch {}
+
+  return `${prefix}${String(currentNum).padStart(padLength, "0")}`;
+}
+
+/**
+ * Resets the sequence counter for a lab back to the starting series number.
+ */
+export function resetBarcodeSequence(barcodeSeries?: string | null, labId?: string | number | null): void {
+  try {
+    if (typeof window !== "undefined") {
+      const storageKey = `lis_barcode_seq_${labId || "default"}`;
+      localStorage.removeItem(storageKey);
+    }
+  } catch {}
+}

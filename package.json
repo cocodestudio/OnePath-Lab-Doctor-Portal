@@ -1,0 +1,35 @@
+{
+  "name": "onepath-lab-doctor-portal",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3003",
+    "build": "next build",
+    "test": "node scripts/unit-test-doctor-portal.mjs",
+    "start": "next start -p 3003",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@types/jsbarcode": "^3.11.4",
+    "html2canvas": "^1.4.1",
+    "html2canvas-pro": "^2.6.1",
+    "jsbarcode": "^3.12.3",
+    "jspdf": "^4.2.1",
+    "lucide-react": "^1.66.0",
+    "next": "16.4.4",
+    "qrcode.react": "^4.2.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "sileo": "^0.1.6"
+  },
+  "devDependencies": {
+    "@tailwindcss/turbopack": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.4",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
