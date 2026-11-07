@@ -75,6 +75,16 @@ runTest("AUTH", "1-Click direct URL token parameter parsing", () => {
   assert.equal(parseToken(testUrl), "doc_demo_portal_token");
 });
 
+runTest("AUTH", "Logout purges tokens and enforces direct hard navigation to /login", () => {
+  const authContextSrc = fs.readFileSync(path.join(portalRoot, "src/lib/auth-context.tsx"), "utf8");
+  assert.ok(authContextSrc.includes('localStorage.removeItem("onepath_doctor_token")'), "Removes doctor token");
+  assert.ok(authContextSrc.includes('window.location.href = "/login"'), "Enforces hard window navigation to /login");
+  assert.ok(authContextSrc.includes('max-age=0'), "Wipes doctor cookie with max-age=0");
+  const portalLayoutSrc = fs.readFileSync(path.join(portalRoot, "src/components/layout/PortalLayout.tsx"), "utf8");
+  assert.ok(portalLayoutSrc.includes('window.location.href = "/login"'), "PortalLayout enforces hard redirect when token is null");
+  assert.ok(portalLayoutSrc.includes('isLoading || !token'), "PortalLayout maintains shimmer without white flash on unauthenticated state");
+});
+
 // ── SUITE 2: UI THEME INTEGRITY & LIS COLOR PARITY ───────────────────────────
 console.log("\n--- Suite 2: LIS Light Clinical Apothecary Theme Integrity ---");
 

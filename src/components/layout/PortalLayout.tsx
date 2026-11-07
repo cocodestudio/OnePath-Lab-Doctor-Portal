@@ -19,16 +19,16 @@ export function PortalLayout({ children }: PortalLayoutProps) {
 
   useEffect(() => {
     if (!isLoading && !token) {
-      router.push("/login");
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      } else {
+        router.push("/login");
+      }
     }
   }, [isLoading, token, router]);
 
-  if (isLoading) {
+  if (isLoading || !token) {
     return <PageShellShimmer />;
-  }
-
-  if (!token) {
-    return null;
   }
 
   return (

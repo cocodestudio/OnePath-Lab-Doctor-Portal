@@ -178,6 +178,7 @@ export default function ProfilePage() {
         {/* Logout Button */}
         <div className="pt-2">
           <button
+            type="button"
             onClick={logout}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-semibold text-xs transition cursor-pointer"
           >

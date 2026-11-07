@@ -90,12 +90,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
-    localStorage.removeItem("onepath_doctor_token");
+    try {
+      localStorage.removeItem("onepath_doctor_token");
+      sessionStorage.clear();
+      document.cookie = "onepath_doctor_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; max-age=0;";
+    } catch {}
+
     setToken(null);
     setDoctor(null);
     setLab(null);
-    toast.info("Logged Out", "You have been safely signed out.");
-    router.push("/login");
+
+    // Hard browser redirect to /login ensures clean unmount, query param drop, and zero stuck state
+    if (typeof window !== "undefined") {
+      window.location.href = "/login";
+    } else {
+      router.push("/login");
+    }
   };
 
   const refreshProfile = async () => {

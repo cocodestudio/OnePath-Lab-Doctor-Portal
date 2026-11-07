@@ -86,6 +86,7 @@ export function Header({ onOpenMobile }: HeaderProps) {
             </div>
 
             <button
+              type="button"
               onClick={logout}
               className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-slate-100 transition cursor-pointer ml-1"
               title="Logout"
