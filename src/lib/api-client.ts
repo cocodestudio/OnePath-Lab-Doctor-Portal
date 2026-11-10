@@ -62,6 +62,16 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     headers.set("Content-Type", "application/json");
   }
 
+  // Securely transmit session token in X-Doctor-Token header
+  if (!headers.has("X-Doctor-Token") && typeof window !== "undefined") {
+    try {
+      const storedToken = localStorage.getItem("onepath_doctor_token");
+      if (storedToken) {
+        headers.set("X-Doctor-Token", storedToken.trim());
+      }
+    } catch {}
+  }
+
   try {
     const response = await fetch(url, {
       ...options,
@@ -175,7 +185,9 @@ export async function fetchDoctorReports(
   if (params.page) query.set("page", String(params.page));
   if (params.per_page) query.set("per_page", String(params.per_page));
 
-  return request(`/doctor-portal/reports?${query.toString()}`);
+  return request(`/doctor-portal/reports?${query.toString()}`, {
+    headers: { "X-Doctor-Token": token.trim() },
+  });
 }
 
 /**
@@ -187,7 +199,8 @@ export async function fetchDoctorSingleReport(
 ): Promise<{ success: boolean; report?: DoctorReport; error?: string }> {
   const cleanToken = encodeURIComponent(token.trim());
   return request<{ success: boolean; report?: DoctorReport; error?: string }>(
-    `/doctor-portal/reports/${encodeURIComponent(reportId)}?token=${cleanToken}`
+    `/doctor-portal/reports/${encodeURIComponent(reportId)}?token=${cleanToken}`,
+    { headers: { "X-Doctor-Token": token.trim() } }
   );
 }
 
@@ -222,7 +235,9 @@ export async function fetchDoctorPatients(
   if (params.page) query.set("page", String(params.page));
   if (params.per_page) query.set("per_page", String(params.per_page));
 
-  return request(`/doctor-portal/patients?${query.toString()}`);
+  return request(`/doctor-portal/patients?${query.toString()}`, {
+    headers: { "X-Doctor-Token": token.trim() },
+  });
 }
 
 /**
@@ -255,7 +270,8 @@ export async function fetchDoctorPatientDetails(
 }> {
   const cleanToken = encodeURIComponent(token.trim());
   return request(
-    `/doctor-portal/patients/${encodeURIComponent(patientId)}?token=${cleanToken}`
+    `/doctor-portal/patients/${encodeURIComponent(patientId)}?token=${cleanToken}`,
+    { headers: { "X-Doctor-Token": token.trim() } }
   );
 }
 
@@ -278,7 +294,9 @@ export async function fetchDoctorAnalytics(
   if (params.end_date) query.set("end_date", params.end_date);
   if (params.search) query.set("search", params.search);
 
-  return request<DoctorAnalytics & { success: boolean }>(`/doctor-portal/analytics?${query.toString()}`);
+  return request<DoctorAnalytics & { success: boolean }>(`/doctor-portal/analytics?${query.toString()}`, {
+    headers: { "X-Doctor-Token": token.trim() },
+  });
 }
 
 /**
