@@ -66,7 +66,27 @@ export function StatCardsShimmer() {
 /**
  * Shimmer skeleton for Charts section
  */
-export function ChartsShimmer() {
+export function ChartsShimmer({ fullWidth = false }: { fullWidth?: boolean } = {}) {
+  if (fullWidth) {
+    return (
+      <div className="w-full bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-xs space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <Shimmer className="h-6 w-56 rounded-lg" />
+            <Shimmer className="h-4 w-80 rounded-md" />
+          </div>
+          <Shimmer className="h-8 w-28 rounded-xl" />
+        </div>
+        <Shimmer className="h-64 sm:h-72 lg:h-80 w-full rounded-2xl" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <Shimmer key={idx} className="h-16 w-full rounded-xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-4">

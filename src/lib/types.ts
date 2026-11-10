@@ -94,10 +94,44 @@ export interface DoctorReport {
   tests?: string[];
   tests_summary?: string[];
   test_count?: number;
+  total_tests?: number;
   results?: TestResultItem[];
   bill?: any;
   lab?: Lab;
   pdf_url?: string | null;
+}
+
+export interface CommissionBillItem {
+  bill_id: string;
+  bill_number: string;
+  date: string;
+  patient_id?: string;
+  patient_code?: string;
+  patient_name: string;
+  patient_phone?: string;
+  patient_age_gender?: string;
+  tests: string[];
+  gross_total: number;
+  discount: number;
+  net_amount: number;
+  paid_amount: number;
+  due_amount: number;
+  commission_percent: number;
+  doctor_commission: number;
+  status: string;
+}
+
+export interface DoctorCommissionSummary {
+  total_patients: number;
+  total_bills: number;
+  total_gross: number;
+  total_discount: number;
+  total_net_sales: number;
+  total_paid: number;
+  total_due: number;
+  total_doctor_commission: number;
+  average_commission_per_patient: number;
+  base_commission_percent: number;
 }
 
 export interface DoctorAnalytics {
@@ -108,10 +142,18 @@ export interface DoctorAnalytics {
     pending_reports: number;
     completion_rate: number;
   };
+  commission_summary?: DoctorCommissionSummary;
+  bills?: CommissionBillItem[];
+  period?: {
+    filter?: string;
+    start_date?: string | null;
+    end_date?: string | null;
+  };
   monthly_trends: {
     month: string;
     short_month: string;
     reports: number;
+    commission?: number;
   }[];
   top_tests: {
     name: string;

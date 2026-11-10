@@ -50,14 +50,14 @@ export function PortalLayout({ children }: PortalLayoutProps) {
 
         {/* Scrollable Body Container (Header stays locked above) */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col scroll-smooth">
-          {/* Page Content: Edge to Edge with crisp responsive padding */}
-          <main className="flex-1 w-full max-w-7xl mx-auto p-3.5 sm:p-6 lg:p-8">
+          {/* Page Content: Expands fully on sidebar collapse with smooth transition */}
+          <main className="flex-1 w-full p-3.5 sm:p-6 lg:p-8 transition-all duration-300 ease-in-out">
             {children}
           </main>
 
           {/* Subdued Footer */}
           <footer className="py-4 px-6 border-t border-slate-200/80 bg-white text-center text-xs text-slate-500 shrink-0">
-            <div className="flex items-center justify-between max-w-7xl mx-auto flex-wrap gap-2.5">
+            <div className="flex items-center justify-between w-full flex-wrap gap-2.5">
               <span className="font-medium text-slate-600">
                 OnePath Lab Doctor Referral Portal
               </span>

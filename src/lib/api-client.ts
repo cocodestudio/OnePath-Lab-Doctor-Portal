@@ -159,6 +159,9 @@ export async function fetchDoctorPatients(
   params: {
     search?: string;
     gender?: string;
+    filter?: string;
+    start_date?: string;
+    end_date?: string;
     page?: number;
     per_page?: number;
   } = {}
@@ -166,12 +169,16 @@ export async function fetchDoctorPatients(
   success: boolean;
   patients: ReferredPatient[];
   summary: { total_patients: number };
+  period?: { filter?: string; start_date?: string | null; end_date?: string | null };
   pagination: { current_page: number; last_page: number; per_page: number; total: number };
 }> {
   const query = new URLSearchParams();
   query.set("token", token.trim());
   if (params.search) query.set("search", params.search);
   if (params.gender && params.gender !== "ALL") query.set("gender", params.gender);
+  if (params.filter) query.set("filter", params.filter);
+  if (params.start_date) query.set("start_date", params.start_date);
+  if (params.end_date) query.set("end_date", params.end_date);
   if (params.page) query.set("page", String(params.page));
   if (params.per_page) query.set("per_page", String(params.per_page));
 
@@ -179,11 +186,59 @@ export async function fetchDoctorPatients(
 }
 
 /**
- * 8. Fetch Doctor Referral Analytics & Trends
+ * 7B. Fetch Single Patient Complete History & All Reports
  */
-export async function fetchDoctorAnalytics(token: string): Promise<DoctorAnalytics & { success: boolean }> {
+export async function fetchDoctorPatientDetails(
+  token: string,
+  patientId: string
+): Promise<{
+  success: boolean;
+  patient?: ReferredPatient & {
+    uhid?: string | null;
+    vial_barcode?: string | null;
+    ref_doctor?: string | null;
+    city?: string | null;
+    pincode?: string | null;
+    total_bills?: number;
+  };
+  reports?: DoctorReport[];
+  bills?: Array<{
+    id: string;
+    custom_id: string;
+    total_amount: number;
+    paid_amount: number;
+    due_amount: number;
+    payment_status: string;
+    date: string;
+  }>;
+  error?: string;
+}> {
   const cleanToken = encodeURIComponent(token.trim());
-  return request<DoctorAnalytics & { success: boolean }>(`/doctor-portal/analytics?token=${cleanToken}`);
+  return request(
+    `/doctor-portal/patients/${encodeURIComponent(patientId)}?token=${cleanToken}`
+  );
+}
+
+/**
+ * 8. Fetch Doctor Referral Analytics, Commission Calculations & Trends
+ */
+export async function fetchDoctorAnalytics(
+  token: string,
+  params: {
+    filter?: string;
+    start_date?: string;
+    end_date?: string;
+    search?: string;
+  } = {}
+): Promise<DoctorAnalytics & { success: boolean }> {
+  const query = new URLSearchParams();
+  query.set("token", token.trim());
+  if (params.filter) query.set("filter", params.filter);
+  if (params.start_date) query.set("start_date", params.start_date);
+  if (params.end_date) query.set("end_date", params.end_date);
+  if (params.search) query.set("search", params.search);
+
+  return request<DoctorAnalytics & { success: boolean }>(`/doctor-portal/analytics?${query.toString()}`);
 }
 
 /**

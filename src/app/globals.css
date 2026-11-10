@@ -11,9 +11,24 @@
   --background: #fbfbfa;
   --foreground: #0f172a;
   --card: #ffffff;
-  --border: #e2e8f0;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
   --primary: #185e48;
   --primary-hover: #134e3b;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f8fafc;
+  --muted-foreground: #64748b;
+  --accent: #ecfdf5;
+  --accent-foreground: #185e48;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #185e48;
+  --radius: 0.875rem;
 }
 
 /* ── Smooth Scrolling ── */

@@ -339,6 +339,162 @@ runTest("SHIMMERS_PORTAL", "Shimmer component file exports reusable skeletons", 
   assert.ok(content.includes("export function PageShellShimmer"), "Must export PageShellShimmer");
 });
 
+// ── SUITE 8: SEARCH OPTIMIZATION & ENHANCED DATE RANGE FILTERING ─────────────
+console.log("\n--- Suite 8: Search Optimization & Enhanced Date Range Filtering ---");
+
+runTest("REPORTS_SEARCH_OPTIMIZATION", "Reports page implements debounced search and comprehensive filters", () => {
+  const reportsPath = path.join(portalRoot, "src", "app", "reports", "page.tsx");
+  const content = fs.readFileSync(reportsPath, "utf-8");
+
+  assert.ok(content.includes("debouncedSearch"), "Must use debounced search to avoid network lag");
+  assert.ok(content.includes('value="yesterday"'), "Must include Yesterday option");
+  assert.ok(content.includes('value="last_week"'), "Must include Last Week option");
+  assert.ok(content.includes("Search by patient, phone"), "Must include expanded placeholder with phone, barcode, doctor");
+  assert.ok(content.includes("Clear Search"), "Must provide search clear button");
+});
+
+runTest("PATIENTS_SEARCH_AND_DATE_RANGE", "Patients page implements search debounce and date range filtering", () => {
+  const patientsPath = path.join(portalRoot, "src", "app", "patients", "page.tsx");
+  const content = fs.readFileSync(patientsPath, "utf-8");
+
+  assert.ok(content.includes("debouncedSearch"), "Patients page must debounce search");
+  assert.ok(content.includes("dateFilter"), "Patients page must provide dateFilter state");
+  assert.ok(content.includes('value="custom"'), "Patients page must provide custom date range option");
+  assert.ok(content.includes('value="last_week"'), "Patients page must provide Last Week option");
+  assert.ok(content.includes('value="yesterday"'), "Patients page must provide Yesterday option");
+  assert.ok(content.includes('type="date"'), "Patients page must provide date pickers");
+  assert.ok(content.includes("start_date:"), "Patients page must forward start_date to API");
+  assert.ok(content.includes("end_date:"), "Patients page must forward end_date to API");
+});
+
+runTest("API_CLIENT_PATIENTS_DATE_PARAMS", "api-client.ts fetchDoctorPatients forwards date filter parameters", () => {
+  const apiPath = path.join(portalRoot, "src", "lib", "api-client.ts");
+  const content = fs.readFileSync(apiPath, "utf-8");
+
+  assert.ok(content.includes("filter?: string"), "fetchDoctorPatients must accept filter param");
+  assert.ok(content.includes("start_date?: string"), "fetchDoctorPatients must accept start_date param");
+  assert.ok(content.includes("end_date?: string"), "fetchDoctorPatients must accept end_date param");
+  assert.ok(content.includes('query.set("filter", params.filter)'), "fetchDoctorPatients must set filter query");
+  assert.ok(content.includes('query.set("start_date", params.start_date)'), "fetchDoctorPatients must set start_date query");
+  assert.ok(content.includes('query.set("end_date", params.end_date)'), "fetchDoctorPatients must set end_date query");
+});
+
+runTest("BACKEND_CONTROLLER_OPTIMIZATIONS", "DoctorPortalController.php implements multi-field search and last_week range", () => {
+  const controllerPath = path.resolve(portalRoot, "..", "Backend", "app", "Http", "Controllers", "Api", "Lis", "DoctorPortalController.php");
+  const content = fs.readFileSync(controllerPath, "utf-8");
+
+  assert.ok(content.includes("case 'last_week':"), "getDateRange must support last_week");
+  assert.ok(content.includes("vial_barcode"), "Search must query vial_barcode");
+  assert.ok(content.includes("ref_doctor"), "Search must query ref_doctor");
+  assert.ok(content.includes("orWhereHas('reports'"), "Patients search must query report custom_id");
+  assert.ok(content.includes("orWhereHas('bills'"), "Patients search must query bill custom_id");
+});
+
+// ── SUITE 9: LIVE SEARCH, PATIENT HISTORY & SALUTATION NORMALIZATION ─────────
+console.log("\n--- Suite 9: Live Search, Patient History & Salutation Normalization ---");
+
+runTest("REPORTS_TAB_BADGE", "Sidebar Patient Reports tab removes Live flag", () => {
+  const sidebarPath = path.join(portalRoot, "src", "components", "layout", "Sidebar.tsx");
+  const sidebarContent = fs.readFileSync(sidebarPath, "utf-8");
+
+  assert.ok(!sidebarContent.includes('badge: "Live"'), "Patient Reports must NOT show 'Live' badge");
+});
+
+runTest("NAME_SEARCH_NORMALIZATION", "Salutation-agnostic regex strips titles for flexible name search", () => {
+  const stripSalutation = (name) => {
+    return name.trim().replace(/^(mr\.?|mrs\.?|ms\.?|dr\.?|miss\.?|master\.?|baby\.?)\s+/i, "");
+  };
+
+  assert.equal(stripSalutation("Mr. Sheeba"), "Sheeba");
+  assert.equal(stripSalutation("Ms Sheeba"), "Sheeba");
+  assert.equal(stripSalutation("Dr. Rajesh Sharma"), "Rajesh Sharma");
+  assert.equal(stripSalutation("Mr Saruk"), "Saruk");
+  assert.equal(stripSalutation("Rakesh"), "Rakesh");
+});
+
+runTest("TOP_HEADER_LIVE_SEARCH", "Header.tsx implements live patient search dropdown with instant navigation", () => {
+  const headerPath = path.join(portalRoot, "src", "components", "layout", "Header.tsx");
+  const headerContent = fs.readFileSync(headerPath, "utf-8");
+
+  assert.ok(headerContent.includes("fetchDoctorPatients"), "Header must query fetchDoctorPatients for live suggestions");
+  assert.ok(headerContent.includes("searchResults"), "Header must manage searchResults state");
+  assert.ok(headerContent.includes("showDropdown"), "Header must render floating patient dropdown");
+  assert.ok(headerContent.includes("/patients/"), "Header patient click must navigate to patient history");
+});
+
+runTest("PATIENT_HISTORY_PAGE", "Patient history page exists and renders complete details and investigation reports", () => {
+  const historyPath = path.join(portalRoot, "src", "app", "patients", "[id]", "page.tsx");
+  assert.ok(fs.existsSync(historyPath), "patients/[id]/page.tsx must exist");
+
+  const content = fs.readFileSync(historyPath, "utf-8");
+  assert.ok(content.includes("fetchDoctorPatientDetails"), "Must call fetchDoctorPatientDetails");
+  assert.ok(content.includes("handleDownloadReport"), "Must support direct PDF download with letterhead");
+  assert.ok(content.includes("PaginatedReportPreview"), "Must mount PaginatedReportPreview for authentic PDF layout");
+  assert.ok(content.includes("Patient Details"), "Must display patient personal details card");
+  assert.ok(content.includes("All Diagnostic Investigation Reports"), "Must display reports history card");
+});
+
+runTest("PATIENT_HISTORY_API", "api-client.ts and DoctorPortalController.php implement patient history endpoint", () => {
+  const apiPath = path.join(portalRoot, "src", "lib", "api-client.ts");
+  const apiContent = fs.readFileSync(apiPath, "utf-8");
+  assert.ok(apiContent.includes("fetchDoctorPatientDetails"), "api-client must export fetchDoctorPatientDetails");
+
+  const controllerPath = path.resolve(portalRoot, "..", "Backend", "app", "Http", "Controllers", "Api", "Lis", "DoctorPortalController.php");
+  const controllerContent = fs.readFileSync(controllerPath, "utf-8");
+  assert.ok(controllerContent.includes("getDoctorPatientDetails"), "DoctorPortalController must define getDoctorPatientDetails");
+});
+
+runTest("DASHBOARD_FULL_WIDTH_CHART", "Dashboard removes Top Tests card and renders full-width Referral Volume chart", () => {
+  const dashPath = path.join(portalRoot, "src", "app", "dashboard", "page.tsx");
+  const dashContent = fs.readFileSync(dashPath, "utf-8");
+
+  assert.ok(!dashContent.includes("TopTestsCard"), "Dashboard must NOT include TopTestsCard");
+  assert.ok(dashContent.includes("ReferralTrendChart"), "Dashboard must include ReferralTrendChart");
+  assert.ok(dashContent.includes('className="w-full"'), "ReferralTrendChart container must be full width");
+
+  const chartPath = path.join(portalRoot, "src", "components", "dashboard", "ReferralTrendChart.tsx");
+  const chartContent = fs.readFileSync(chartPath, "utf-8");
+  assert.ok(chartContent.includes("Monthly Referral Volume"), "Chart must display Monthly Referral Volume");
+  assert.ok(chartContent.includes("Total Referred:"), "Chart must display Total Referred summary");
+});
+
+// ── SUITE 10: FLUID COLLAPSE EXPANSION & REFERRAL COMMISSION ─────────────────
+console.log("\n--- Suite 10: Fluid Collapse Expansion, Profile Removal & Referral Commission ---");
+
+runTest("SIDEBAR_PROFILE_REMOVED", "Sidebar removes Doctor Profile and features Referral Commission", () => {
+  const sidebarPath = path.join(portalRoot, "src", "components", "layout", "Sidebar.tsx");
+  const sidebarContent = fs.readFileSync(sidebarPath, "utf-8");
+
+  assert.ok(!sidebarContent.includes('name: "Doctor Profile"'), "Sidebar must NOT include Doctor Profile");
+  assert.ok(sidebarContent.includes('name: "Referral Commission"'), "Sidebar must feature Referral Commission");
+});
+
+runTest("LAYOUT_FLUID_EXPANSION", "PortalLayout main content uses full fluid width without max-w-7xl constraint", () => {
+  const layoutPath = path.join(portalRoot, "src", "components", "layout", "PortalLayout.tsx");
+  const layoutContent = fs.readFileSync(layoutPath, "utf-8");
+
+  assert.ok(layoutContent.includes('className="flex-1 w-full'), "PortalLayout main must use full width");
+  assert.ok(!layoutContent.includes('max-w-7xl mx-auto p-3.5'), "PortalLayout main must NOT constrain page width to max-w-7xl mx-auto");
+});
+
+runTest("COMMISSION_CALCULATION_BACKEND", "DoctorPortalController.php calculates commission_summary and itemized doctor_commission", () => {
+  const controllerPath = path.resolve(portalRoot, "..", "Backend", "app", "Http", "Controllers", "Api", "Lis", "DoctorPortalController.php");
+  const content = fs.readFileSync(controllerPath, "utf-8");
+
+  assert.ok(content.includes("'commission_summary' => ["), "Controller must return commission_summary");
+  assert.ok(content.includes("'total_doctor_commission' =>"), "Controller must return total_doctor_commission");
+  assert.ok(content.includes("'doctor_commission' =>"), "Controller must calculate individual doctor_commission per bill");
+});
+
+runTest("COMMISSION_PAGE_FRONTEND", "analytics/page.tsx renders Referral Commission ledger and summary", () => {
+  const analyticsPath = path.join(portalRoot, "src", "app", "analytics", "page.tsx");
+  const content = fs.readFileSync(analyticsPath, "utf-8");
+
+  assert.ok(content.includes("Referral Commission & Earnings"), "Page must feature Referral Commission & Earnings title");
+  assert.ok(content.includes("total_doctor_commission"), "Page must render total_doctor_commission metric");
+  assert.ok(content.includes("Patient Referral Commission Ledger"), "Page must render Commission Ledger table");
+});
+
 // ── FINAL REPORT ─────────────────────────────────────────────────────────────
 console.log("\n===============================================================================");
 console.log(`DOCTOR PORTAL UNIT TEST RESULTS: ${totalPassed} PASSED | ${totalFailed} FAILED`);
