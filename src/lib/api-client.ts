@@ -6,14 +6,53 @@ import {
   DoctorAnalytics,
 } from "./types";
 
-const RAW_API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-export const API_BASE_URL = RAW_API_URL.replace(/\/+$/, "");
+/**
+ * Resolves the Backend API base URL with automatic environment & hostname fallback.
+ * Prevents production deployments (e.g. Vercel, doctor.onepathlab.com) from failing
+ * due to missing or misconfigured build-time environment variables.
+ */
+export function getApiBaseUrl(): string {
+  const envUrl = (process.env.NEXT_PUBLIC_API_URL || "").trim();
+
+  // In browser runtime: Check hostname
+  if (typeof window !== "undefined" && window.location?.hostname) {
+    const hostname = window.location.hostname.toLowerCase();
+    const isLocalhost =
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname.endsWith(".local");
+
+    // If running on a live/remote domain (e.g. doctor.onepathlab.com, *.vercel.app)
+    if (!isLocalhost) {
+      // If no envUrl or if envUrl mistakenly points to localhost, auto-promote to production API
+      if (!envUrl || envUrl.includes("localhost") || envUrl.includes("127.0.0.1")) {
+        return "https://api.onepathlab.com/api";
+      }
+    }
+  }
+
+  // If explicit valid envUrl provided
+  if (envUrl) {
+    return envUrl.replace(/\/+$/, "");
+  }
+
+  // Server-side production fallback
+  if (process.env.NODE_ENV === "production") {
+    return "https://api.onepathlab.com/api";
+  }
+
+  // Local development default
+  return "http://localhost:8000/api";
+}
+
+export const API_BASE_URL = getApiBaseUrl();
 
 /**
  * Common request helper with unified error handling and timeout
  */
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
+  const baseUrl = getApiBaseUrl();
+  const url = `${baseUrl}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
   
   const headers = new Headers(options.headers || {});
   if (!headers.has("Accept")) {
@@ -47,7 +86,8 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     return data as T;
   } catch (err: any) {
     if (err.name === "TypeError" && err.message?.includes("fetch")) {
-      throw new Error(`Cannot reach Diagnostic API at ${API_BASE_URL}. Ensure Backend server is running.`);
+      const activeBase = getApiBaseUrl();
+      throw new Error(`Cannot reach Diagnostic API at ${activeBase}. Ensure Backend server is running.`);
     }
     throw err;
   }
@@ -246,8 +286,10 @@ export async function fetchDoctorAnalytics(
  */
 export async function checkBackendHealth(): Promise<{ ok: boolean; message: string; latencyMs: number }> {
   const startTime = Date.now();
+  const baseUrl = getApiBaseUrl();
   try {
-    const res = await fetch(`${API_BASE_URL.replace(/\/api$/, "")}/api/doctor-portal/verify?token=ping_check`, {
+    const origin = baseUrl.replace(/\/api$/, "");
+    const res = await fetch(`${origin}/api/doctor-portal/verify?token=ping_check`, {
       method: "GET",
       headers: { Accept: "application/json" },
     });
@@ -274,7 +316,8 @@ export function getCleanLetterheadUrl(url?: string | null): string | null {
   if (trimmed.startsWith("blob:")) return null;
   if (trimmed.startsWith("data:image/")) return trimmed;
 
-  const origin = API_BASE_URL.replace(/\/api$/, "");
+  const baseUrl = getApiBaseUrl();
+  const origin = baseUrl.replace(/\/api$/, "");
   if (trimmed.startsWith("/storage/")) return `${origin}${trimmed}`;
   if (trimmed.startsWith("storage/")) return `${origin}/${trimmed}`;
   if (trimmed.includes("/storage/")) {

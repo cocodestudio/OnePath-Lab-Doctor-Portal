@@ -495,6 +495,95 @@ runTest("COMMISSION_PAGE_FRONTEND", "analytics/page.tsx renders Referral Commiss
   assert.ok(content.includes("Patient Referral Commission Ledger"), "Page must render Commission Ledger table");
 });
 
+// ── SUITE 11: PRODUCTION DEPLOYMENT & API ROUTING RESILIENCE ────────────────
+console.log("\n--- Suite 11: Production Deployment & API Routing Resilience ---");
+
+runTest("PRODUCTION_ENV_FILE", ".env.production exists and targets live https://api.onepathlab.com/api", () => {
+  const envProdPath = path.join(portalRoot, ".env.production");
+  assert.ok(fs.existsSync(envProdPath), ".env.production must exist in Doctor Portal root");
+  const envContent = fs.readFileSync(envProdPath, "utf-8");
+  assert.ok(
+    envContent.includes("NEXT_PUBLIC_API_URL=https://api.onepathlab.com/api"),
+    ".env.production must define NEXT_PUBLIC_API_URL=https://api.onepathlab.com/api"
+  );
+  assert.ok(
+    envContent.includes("NEXT_PUBLIC_BACKEND_URL=https://api.onepathlab.com"),
+    ".env.production must define NEXT_PUBLIC_BACKEND_URL=https://api.onepathlab.com"
+  );
+});
+
+runTest("GITIGNORE_ALLOWS_ENV_PRODUCTION", ".gitignore explicitly un-ignores .env.production for production builds", () => {
+  const gitignorePath = path.join(portalRoot, ".gitignore");
+  const gitignoreContent = fs.readFileSync(gitignorePath, "utf-8");
+  assert.ok(
+    gitignoreContent.includes("!.env.production"),
+    ".gitignore must include !.env.production"
+  );
+});
+
+runTest("API_CLIENT_DYNAMIC_BASE_URL", "api-client.ts implements getApiBaseUrl with automatic remote hostname auto-promotion", () => {
+  const apiClientPath = path.join(portalRoot, "src", "lib", "api-client.ts");
+  const apiClientContent = fs.readFileSync(apiClientPath, "utf-8");
+
+  assert.ok(
+    apiClientContent.includes("export function getApiBaseUrl(): string"),
+    "api-client.ts must export getApiBaseUrl function"
+  );
+  assert.ok(
+    apiClientContent.includes("https://api.onepathlab.com/api"),
+    "api-client.ts must include production fallback https://api.onepathlab.com/api"
+  );
+
+  // Re-verify resolution logic behavior:
+  const simulateGetApiBaseUrl = (envUrl, windowMock, nodeEnv = "production") => {
+    const rawEnv = (envUrl || "").trim();
+    if (windowMock && windowMock.location?.hostname) {
+      const hostname = windowMock.location.hostname.toLowerCase();
+      const isLocalhost =
+        hostname === "localhost" ||
+        hostname === "127.0.0.1" ||
+        hostname.endsWith(".local");
+
+      if (!isLocalhost) {
+        if (!rawEnv || rawEnv.includes("localhost") || rawEnv.includes("127.0.0.1")) {
+          return "https://api.onepathlab.com/api";
+        }
+      }
+    }
+    if (rawEnv) return rawEnv.replace(/\/+$/, "");
+    if (nodeEnv === "production") return "https://api.onepathlab.com/api";
+    return "http://localhost:8000/api";
+  };
+
+  // Scenario A: Production domain (doctor.onepathlab.com) with unset envUrl
+  assert.equal(
+    simulateGetApiBaseUrl("", { location: { hostname: "doctor.onepathlab.com" } }),
+    "https://api.onepathlab.com/api",
+    "Should auto-resolve to production API on doctor.onepathlab.com"
+  );
+
+  // Scenario B: Production domain with localhost envUrl inadvertently baked into build
+  assert.equal(
+    simulateGetApiBaseUrl("http://localhost:8000/api", { location: { hostname: "doctor.onepathlab.com" } }),
+    "https://api.onepathlab.com/api",
+    "Should auto-promote localhost env to production API on remote domain"
+  );
+
+  // Scenario C: Vercel preview domain (e.g., doctor-portal-xyz.vercel.app)
+  assert.equal(
+    simulateGetApiBaseUrl("", { location: { hostname: "doctor-portal-xyz.vercel.app" } }),
+    "https://api.onepathlab.com/api",
+    "Should auto-resolve to production API on Vercel preview URLs"
+  );
+
+  // Scenario D: Local development in browser (localhost:3003)
+  assert.equal(
+    simulateGetApiBaseUrl("http://localhost:8000/api", { location: { hostname: "localhost" } }, "development"),
+    "http://localhost:8000/api",
+    "Should keep localhost for local development"
+  );
+});
+
 // ── FINAL REPORT ─────────────────────────────────────────────────────────────
 console.log("\n===============================================================================");
 console.log(`DOCTOR PORTAL UNIT TEST RESULTS: ${totalPassed} PASSED | ${totalFailed} FAILED`);

@@ -163,9 +163,18 @@ export function resolveSignatureUrl(url: string | null | undefined): string | nu
   if (url.startsWith("data:") || url.startsWith("blob:") || url.startsWith("http://") || url.startsWith("https://")) {
     return url;
   }
-  const apiOrigin = process.env.NEXT_PUBLIC_API_URL 
-    ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/lis\/?$/, "").replace(/\/api\/?$/, "")
-    : (typeof window !== "undefined" && window.location.hostname === "localhost" ? "http://localhost:8000" : "https://api.onepathlab.com");
+  const isBrowserLocal = typeof window !== "undefined" && (
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1" ||
+    window.location.hostname.endsWith(".local")
+  );
+  const rawEnv = process.env.NEXT_PUBLIC_API_URL?.trim();
+  let apiOrigin = "https://api.onepathlab.com";
+  if (rawEnv && (!rawEnv.includes("localhost") || isBrowserLocal)) {
+    apiOrigin = rawEnv.replace(/\/api\/lis\/?$/, "").replace(/\/api\/?$/, "");
+  } else if (isBrowserLocal) {
+    apiOrigin = "http://localhost:8000";
+  }
   const cleanPath = url.startsWith("/") ? url : `/${url}`;
   return `${apiOrigin}${cleanPath}`;
 }
