@@ -62,25 +62,28 @@ export function StatCards({ metrics }: StatCardsProps) {
         return (
           <Card
             key={idx}
-            className="group hover:border-emerald-300 hover:shadow-sm transition-all duration-200"
+            className="group hover-card-lift bg-white border border-slate-200/90 hover:border-emerald-300/90 relative overflow-hidden cursor-default select-none shadow-2xs"
           >
+            {/* Subtle top indicator bar */}
+            <div className={`h-1 w-full ${card.iconBg.includes('emerald') ? 'bg-emerald-500' : card.iconBg.includes('blue') ? 'bg-blue-500' : card.iconBg.includes('teal') ? 'bg-teal-500' : 'bg-amber-500'} opacity-80`} />
+            
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-3.5">
                 <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">
                   {card.title}
                 </span>
                 <div
-                  className={`w-9 h-9 rounded-xl border ${card.iconBg} flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform`}
+                  className={`w-9 h-9 rounded-xl border ${card.iconBg} flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-110 group-hover:rotate-3 transition-transform duration-200 ease-out`}
                 >
                   <Icon className="w-4 h-4" />
                 </div>
               </div>
 
               <div className="flex items-baseline justify-between gap-2">
-                <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight tabular-nums">
                   {card.value}
                 </div>
-                <Badge variant={card.badgeVariant} className="text-[10.5px]">
+                <Badge variant={card.badgeVariant} className="text-[10.5px] font-semibold group-hover:shadow-xs transition-shadow">
                   <TrendingUp className="w-3 h-3 shrink-0" />
                   <span>{card.trend}</span>
                 </Badge>

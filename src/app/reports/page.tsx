@@ -235,6 +235,56 @@ function ReportsContent() {
           </div>
         </div>
 
+        {/* Quick Status Filter Pills (ui-ux-pro-max + Emil Kowalski) */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="inline-flex items-center gap-1 p-1 bg-slate-100/90 rounded-2xl border border-slate-200/80 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => {
+                setStatusFilter("ALL");
+                setCurrentPage(1);
+              }}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 active-press cursor-pointer ${
+                statusFilter === "ALL"
+                  ? "bg-white text-emerald-800 shadow-2xs border border-slate-200/60"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              All Reports ({totalCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setStatusFilter("VERIFIED");
+                setCurrentPage(1);
+              }}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 active-press flex items-center gap-1.5 cursor-pointer ${
+                statusFilter === "VERIFIED"
+                  ? "bg-emerald-600 text-white shadow-xs"
+                  : "text-emerald-700 hover:bg-emerald-50"
+              }`}
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Ready for Download</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setStatusFilter("PROCESSING");
+                setCurrentPage(1);
+              }}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 active-press flex items-center gap-1.5 cursor-pointer ${
+                statusFilter === "PROCESSING"
+                  ? "bg-amber-500 text-white shadow-xs"
+                  : "text-amber-700 hover:bg-amber-50"
+              }`}
+            >
+              <Clock className="w-3.5 h-3.5" />
+              <span>In Processing</span>
+            </button>
+          </div>
+        </div>
+
         {/* Filters & Search Toolbar */}
         <Card className="p-4 shadow-2xs">
           <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
@@ -371,11 +421,32 @@ function ReportsContent() {
               <TableShimmer rows={6} />
             ) : reports.length === 0 ? (
               <div className="py-20 text-center text-slate-500">
-                <FileText className="w-10 h-10 mx-auto text-slate-300 mb-2" />
-                <p className="font-semibold text-slate-700">No Matching Reports Found</p>
-                <p className="text-xs text-slate-400 mt-1">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200/80 flex items-center justify-center text-emerald-700 mx-auto mb-3 shadow-2xs">
+                  <FileText className="w-6 h-6" />
+                </div>
+                <p className="font-bold text-slate-800 text-sm">No Matching Reports Found</p>
+                <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
                   Try adjusting your search criteria or date filter.
                 </p>
+                {(searchTerm || statusFilter !== "ALL" || dateFilter !== "all") && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSearchTerm("");
+                      setDebouncedSearch("");
+                      setStatusFilter("ALL");
+                      setDateFilter("all");
+                      setStartDate("");
+                      setEndDate("");
+                      setCurrentPage(1);
+                    }}
+                    className="mt-4 gap-1.5 active-press text-xs font-semibold"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Reset All Filters</span>
+                  </Button>
+                )}
               </div>
             ) : (
               <Table>
@@ -479,7 +550,7 @@ function ReportsContent() {
                             size="sm"
                             onClick={() => handleDownloadReport(report)}
                             disabled={Boolean(downloadingId)}
-                            className="gap-1.5"
+                            className="gap-1.5 active-press shadow-2xs hover:shadow-xs transition-all font-semibold"
                             title="Download Official Report PDF (with Letterhead)"
                           >
                             {isDownloadingThis ? (

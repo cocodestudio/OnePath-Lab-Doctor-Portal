@@ -13,6 +13,7 @@ import {
   ChevronRight,
   X,
   Sparkles,
+  Smartphone,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -45,6 +46,12 @@ const navItems = [
     name: "Referral Commission",
     href: "/analytics",
     icon: BadgePercent,
+    badge: null,
+  },
+  {
+    name: "App Showcase",
+    href: "/showcase",
+    icon: Smartphone,
     badge: null,
   },
 ];

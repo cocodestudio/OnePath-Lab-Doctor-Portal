@@ -263,11 +263,32 @@ function PatientsContent() {
               <TableShimmer rows={6} />
             ) : patients.length === 0 ? (
               <div className="py-20 text-center text-slate-500">
-                <UserCheck className="w-10 h-10 mx-auto text-slate-300 mb-2" />
-                <p className="font-semibold text-slate-700">No Referred Patients Found</p>
-                <p className="text-xs text-slate-400 mt-1">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200/80 flex items-center justify-center text-emerald-700 mx-auto mb-3 shadow-2xs">
+                  <UserCheck className="w-6 h-6" />
+                </div>
+                <p className="font-bold text-slate-800 text-sm">No Referred Patients Found</p>
+                <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
                   Patients who register at the laboratory with your referral will show up here.
                 </p>
+                {(searchTerm || genderFilter !== "ALL" || dateFilter !== "all") && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSearchTerm("");
+                      setDebouncedSearch("");
+                      setGenderFilter("ALL");
+                      setDateFilter("all");
+                      setStartDate("");
+                      setEndDate("");
+                      setCurrentPage(1);
+                    }}
+                    className="mt-4 gap-1.5 active-press text-xs font-semibold"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Reset All Filters</span>
+                  </Button>
+                )}
               </div>
             ) : (
               <Table>
@@ -366,7 +387,7 @@ function PatientsContent() {
                                 e.stopPropagation();
                                 router.push(`/patients/${pat.id}`);
                               }}
-                              className="gap-1 shadow-2xs text-xs font-semibold"
+                              className="gap-1 shadow-2xs hover:shadow-xs active-press text-xs font-semibold transition-all"
                             >
                               <Eye className="w-3.5 h-3.5" />
                               <span>View History</span>

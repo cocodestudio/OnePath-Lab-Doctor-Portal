@@ -146,7 +146,7 @@ export default function ReferralCommissionPage() {
         {/* 4 Key Summary KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {/* 1. Total Commission Earned (Highlight Card) */}
-          <Card className="bg-gradient-to-br from-emerald-50/90 via-teal-50/30 to-white border-emerald-200/90 shadow-2xs">
+          <Card className="hover-card-lift bg-gradient-to-br from-emerald-50/90 via-teal-50/30 to-white border-emerald-200/90 shadow-2xs">
             <CardContent className="p-4 sm:p-5">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">
@@ -166,7 +166,7 @@ export default function ReferralCommissionPage() {
           </Card>
 
           {/* 2. Total Net Clinical Billing */}
-          <Card className="shadow-2xs">
+          <Card className="hover-card-lift shadow-2xs">
             <CardContent className="p-4 sm:p-5">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">

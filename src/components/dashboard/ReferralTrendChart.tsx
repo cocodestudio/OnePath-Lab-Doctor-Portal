@@ -212,7 +212,7 @@ export function ReferralTrendChart({ trends = [] }: ReferralTrendChartProps) {
 
         {/* Footer Metrics Summary Strip */}
         <div className="mt-8 pt-5 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100">
+          <div className="p-3 bg-slate-50/70 hover:bg-emerald-50/40 rounded-xl border border-slate-100 hover:border-emerald-200/80 transition-all duration-200">
             <div className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
               Total Tests
             </div>
@@ -222,7 +222,7 @@ export function ReferralTrendChart({ trends = [] }: ReferralTrendChartProps) {
             <div className="text-[10px] text-slate-500 mt-0.5">In current 6mo cycle</div>
           </div>
 
-          <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100">
+          <div className="p-3 bg-slate-50/70 hover:bg-emerald-50/40 rounded-xl border border-slate-100 hover:border-emerald-200/80 transition-all duration-200">
             <div className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
               Monthly Average
             </div>
@@ -232,7 +232,7 @@ export function ReferralTrendChart({ trends = [] }: ReferralTrendChartProps) {
             <div className="text-[10px] text-slate-500 mt-0.5">Tests per month</div>
           </div>
 
-          <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100">
+          <div className="p-3 bg-slate-50/70 hover:bg-emerald-50/40 rounded-xl border border-slate-100 hover:border-emerald-200/80 transition-all duration-200">
             <div className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
               Peak Month
             </div>
@@ -244,7 +244,7 @@ export function ReferralTrendChart({ trends = [] }: ReferralTrendChartProps) {
             </div>
           </div>
 
-          <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100">
+          <div className="p-3 bg-slate-50/70 hover:bg-emerald-50/40 rounded-xl border border-slate-100 hover:border-emerald-200/80 transition-all duration-200">
             <div className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
               LIS Synchronization
             </div>
